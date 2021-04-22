@@ -27,6 +27,7 @@ Relevant projects:
 - [Istio/Envoy example](https://github.com/proxy-wasm/proxy-wasm-cpp-host/pull/147) load-time check of WasmSign signatures
 - [Validation in Lucet](https://bytecodealliance.github.io/lucet/Integrity-and-authentication.html)
 - [WAPM package manager](https://medium.com/wasmer/securing-wapm-packages-with-package-signing-3cf0d12f32f3) signature verification
+- [Sigstore](https://sigstore.dev) transparency log
 
 ## Requirements and justifications
 
@@ -55,31 +56,32 @@ Relevant projects:
 
 ## Discussed options
 
-**(a) Sign complete bytecode**
+- **(a) Sign complete bytecode**
 
-Append “signature” section at the end of the file.
+  Append “signature” section at the end of the file.
 
-**(b) Sign all bytecode preceding the “signature” Section**
+- **(b) Sign all bytecode preceding the “signature” Section**
 
-This allows adding new Custom Sections after the signature was created (see: Appendix 1). 
+  This allows adding new Custom Sections after the signature was created.
+  See [Appendix 1](#appendix-1). 
 
-**(c) Sign all bytecode since the previous “signature” section**
+- **(c) Sign all bytecode since the previous “signature” section**
 
-Sign bytecode since the previous signature section or start of the module if there wasn’t any (i.e. signing consecutive groups of sections).
+  Sign bytecode since the previous signature section or start of the module if there wasn’t any (i.e. signing consecutive groups of sections).
 
-This allows adding new custom sections after the signature was created, and removing consecutive groups of sections along with their signatures.
+  This allows adding new custom sections after the signature was created, and removing consecutive groups of sections along with their signatures.
 
-**(d) Sign hashes of consecutive sections**
+- **(d) Sign hashes of consecutive sections**
 
-Split sections into parts (consecutive sections, delimited by a marker) that can be signed and verified independently, and sign the concatenation of their hashes.
+  Split sections into parts (consecutive sections, delimited by a marker) that can be signed and verified independently, and sign the concatenation of their hashes.
 
-This allows complete and partial verification of a module using a single signature, as well as adding new custom sections with their signatures.
+  This allows complete and partial verification of a module using a single signature, as well as adding new custom sections with their signatures.
 
-See [Appendix 2](#appendix-2).
+  See [Appendix 2](#appendix-2).
 
-**(e) Include manifest in the “signature” section**
+- **(e) Include manifest in the “signature” section**
 
-In the signature section, include a manifest which describes which sections are signed using a given signature. This allows signing arbitrary sets of sections.
+  In the signature section, include a manifest which describes which sections are signed using a given signature. This allows signing arbitrary sets of sections.
 
 ## Scratch notes
 
