@@ -151,11 +151,13 @@ Example of a previously signed module, on top of which an additional part, signe
 
 *Note: In the simplified notation above, the signature marks have been omitted from the hash computation. But these sections should actually be included like other sections.*
 
+Reusing a key doesn’t require an additional row, only an update of `m` and the signature.
+
 **Properties:**
 
-- The placement of the signature section doesn’t matter.
-- Reusing a key doesn’t require an additional row, only an update of `m` and the signature.
-- Verifiers don't learn hashes of removed sections due to markers containing random bits.
+- Verification of the data between the beginning of a module and any marker (or the end of the module) can be made using a single signature.
+- Verifiers don't learn any information about removed sections due to markers containing random bits.
+
 
 **Example schema for the signature section:**
 
@@ -164,13 +166,14 @@ Example of a previously signed module, on top of which an additional part, signe
     "version": "...",
     "entries": [
         {
+            "hash_function": "...",
             "m": "...",
             "signatures": [
-   {
-                "key_id?": "...", // optional
-                "signature": "..."
-               }
-		 ]
+                {
+                    "key_id?": "...",
+                    "signature": "..."
+                }
+            ]
         }
     ]
 }
