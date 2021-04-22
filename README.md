@@ -39,30 +39,23 @@ Relevant projects:
   
 - [X] The format used to encode signatures and related should be extensible
 
-## Scratch notes
-
-- Should signatures have associated metadata/annotations?
-- Should the signature section include a timestamp, a module version, or more generally, should we define a minimal set of optional/required metadata that will be signed along with the rest of the module?
-- We may want the set of signature algorithms we support and the ones required by the [WASI-crypto](https://github.com/jedisct1/WASI-crypto/blob/main/docs/wasi-crypto.md#algorithms) proposal to overlap.
-- Add new “description” and “usage” Custom Sections, to be defined in this working group, then presented to the WebAssembly core as a standalone proposal.
-
 ## Discussed options
 
-### (a) Sign complete bytecode
+**(a) Sign complete bytecode**
 
 Append “signature” section at the end of the file.
 
-### (b) Sign all bytecode preceding the “signature” Section
+**(b) Sign all bytecode preceding the “signature” Section**
 
 This allows adding new Custom Sections after the signature was created (see: Appendix 1). 
 
-### (c) Sign all bytecode since the previous “signature” section
+**(c) Sign all bytecode since the previous “signature” section**
 
 Sign bytecode since the previous signature section or start of the module if there wasn’t any (i.e. signing consecutive groups of sections).
 
-This allows adding new Custom Sections after the signature was created, and removing consecutive groups of sections along with their signatures.
+This allows adding new custom sections after the signature was created, and removing consecutive groups of sections along with their signatures.
 
-### (d) Sign hashes of consecutive sections
+**(d) Sign hashes of consecutive sections**
 
 Split sections into parts (consecutive sections, delimited by a marker) that can be signed and verified independently, and sign the concatenation of their hashes.
 
@@ -70,13 +63,20 @@ This allows complete and partial verification of a module using a single signatu
 
 See [Appendix 2](#appendix-2).
 
-### (e) Include manifest in the “signature” section
+**(e) Include manifest in the “signature” section**
 
 In the signature section, include a manifest which describes which sections are signed using a given signature. This allows signing arbitrary sets of sections.
 
+## Scratch notes
+
+- Should signatures have associated metadata/annotations?
+- Should the signature section include a timestamp, a module version, or more generally, should we define a minimal set of optional/required metadata that will be signed along with the rest of the module?
+- We may want the set of signature algorithms we support and the ones required by the [WASI-crypto](https://github.com/jedisct1/WASI-crypto/blob/main/docs/wasi-crypto.md#algorithms) proposal to overlap.
+- Add new “description” and “usage” Custom Sections, to be defined in this working group, then presented to the WebAssembly core as a standalone proposal.
+
 ## Appendix 1
 
-Use case for adding new Custom Sections *after* the original signature was generated, and the need for signatures to be able to cover only part of the Wasm module.
+**Use case for adding new Custom Sections *after* the original signature was generated, and the need for signatures to be able to cover only part of the Wasm module.**
 
 1. Wasm module author compiles Wasm module (bytecode)
 2. Wasm module author signs Wasm module (`sign(hash(bytecode))`), and appends the signature in a “signature” (`A`) Custom Section.
@@ -99,11 +99,13 @@ Use case for adding new Custom Sections *after* the original signature was gener
 
 ## Appendix 2
 
-A single signature for multiple parts, still allowing verification of a subset and incremental updates.
+**A single signature for multiple parts, still allowing verification of a subset and incremental updates.**
 
 Requires two custom section types, or a single section type and a bit to differentiate both:
 - A marker between two signed parts (consecutive sections)
 - The signatures themselves
+
+**Delimiting parts:**
 
 A module is split into parts, by inserting a small marker between them:
 
@@ -120,7 +122,7 @@ If partial verification is not required, no markers are necessary.
 
 The only content of a marker is a 16 byte random string.
 
-Format of the signature section:
+**Format of the signature section:**
 
 |                                                     |                       |              |
 | --------------------------------------------------- | --------------------- | ------------ |
@@ -135,7 +137,7 @@ Signature verification for `{p1...pℓ}`, for any `ℓ ≤ n` :
 
 An existing signature section should be skipped when computing the rolling hash.
 
-Adding a part `pn+1`, signed with a different key:
+**Adding a part `pn+1`, signed with a different key:**
 
 1. A signature mark is added before the additional sections
 2. A new signature entry is appended
@@ -147,15 +149,15 @@ Example of a previously signed module, on top of which an additional part, signe
 | `m = H(p1) || H(p1 || p2) || … || H(p1 || … || pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
 | `m’ = H(p1 || … || pn || pn+1)`                     | _(optional)_ `key id'` | `Sign(k', m')` |
 
-**Note:** In the simplified notation above, the signature marks have been omitted from the hash computation. But these sections should actually be included like other sections.
+*Note: In the simplified notation above, the signature marks have been omitted from the hash computation. But these sections should actually be included like other sections.*
 
-Properties:
+**Properties:**
 
 - The placement of the signature section doesn’t matter.
 - Reusing a key doesn’t require an additional row, only an update of `m` and the signature.
 - Verifiers don't learn hashes of removed sections due to markers containing random bits.
 
-Example schema for the signature section:
+**Example schema for the signature section:**
 
 ```json
 {
@@ -174,6 +176,6 @@ Example schema for the signature section:
 }
 ```
 
-Properties:
+**Properties of the above signature format:**
 - A section set can be signed with multiple keys
 - Multiple sets can be signed incrementally
