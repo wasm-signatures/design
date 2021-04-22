@@ -79,3 +79,26 @@ See Appendix 2.
 
 In the signature section, include a manifest which describes which sections are signed using a given signature. This allows signing arbitrary sets of sections.
 
+## Appendix 1
+
+Use case for adding new Custom Sections *after* the original signature was generated, and the need for signatures to be able to cover only part of the Wasm module.
+
+1. Wasm module author compiles Wasm module (bytecode)
+2. Wasm module author signs Wasm module (`sign(hash(bytecode))`), and appends the signature in a “signature” (`A`) Custom Section.
+3. Wasm module author distributes signed Wasm module:
+
+| sections          | covered by "signature" (`A`) |
+| ----------------- | ---------------------------- |
+| bytecode          | yes                          |
+| "signature" (`A`) |                              |
+
+1. Customer uploads Wasm module to the Wasm optimization service, which verifies that the Wasm module is signed by the provided public key.
+“Wasm optimization” service compiles uploaded Wasm module (`compile(bytecode)`), appends it in a `precompiled_runtimeX` Custom Section, then signs the complete Wasm module (`sign(hash(bytecode+signatureA+precompiled_runtimeX))`), and appends the signature in a “signature” (`B`) Custom Section:
+
+| sections               | covered by "signature" (`A`) | covered by "signature" (`B`) |
+| ---------------------- | ---------------------------- | ---------------------------- |
+| bytecode               | yes                          | yes                          |
+| "signature" (`A`)      |                              | yes                          |
+| `precompiled_runtimeX` |                              | yes                          |
+| "signature" (`B`)      |                              |                              |
+
