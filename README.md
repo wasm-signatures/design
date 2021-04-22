@@ -16,33 +16,28 @@ Relevant projects:
 
 ## Requirements and justifications
 
-### Signatures may implement multiple signature algorithms
-- Compliance requirements
-- Public key size/signature size/verification CPU cost tradeoffs (ex: post-quantum schemes vs EdDSA)
-- Code and key reuse (ex: ECDSA-SHA3 for blockchains already leveraging SHA3, EdDSA to use existing SSH keys)
+- [X] Signatures may implement multiple signature algorithms
+  - Compliance requirements
+  - Public key size/signature size/verification CPU cost tradeoffs (ex: post-quantum schemes vs EdDSA)
+  - Code and key reuse (ex: ECDSA-SHA3 for blockchains already leveraging SHA3, EdDSA to use existing SSH keys)
 
-### It should be possible to verify a module file before execution 
+- [X] It should be possible to verify a module file before execution 
 
-### It should be possible to add signed custom sections
-
-...to a potentially signed module so that one can verify the original module and the additional custom section independently
-
-- See [Appendix 1](#appendix-1). A user may want to add additional signed information (debug data, precompiled headers) to a signed module and then re-distribute. Users may or may not trust and choose to consume the additional information.
-
-### Signatures should support streaming compilations
-
-### A module may contain multiple signatures
-
-...possibly with key identifiers for each signature  
-
-- Required for key rotation
-- Keys may be short-term
-- There can be a signature for sections 1, 2, 3 and another one for sections 1, 2, 3, 4 in order to make section 4 optional, yet still verifiable when needed
-- [Oak](http://projectoak.com) use case, where each signature represents a property
-- The ability to require multiple signers to trust a module (ex: CI system + module maintainer)
-- Key identifiers can be used by verifiers to map to public key identifiers they have, and/or quickly reject a signature if it does not match.
+- [X] It should be possible to add signed custom sections to a potentially signed module so that one can verify the original module and the additional custom section independently
   
-### The format used to encode signatures and related should be extensible
+  See [Appendix 1](#appendix-1). A user may want to add additional signed information (debug data, precompiled headers) to a signed module and then re-distribute. Users may or may not trust and choose to consume the additional information.
+
+- [X] Signatures should support streaming compilations
+
+- [X] A module may contain multiple signatures possibly with key identifiers for each signature
+  - Required for key rotation
+  - Keys may be short-term
+  - There can be a signature for sections 1, 2, 3 and another one for sections 1, 2, 3, 4 in order to make section 4 optional, yet still verifiable when needed
+  - [Oak](http://projectoak.com) use case, where each signature represents a property
+  - The ability to require multiple signers to trust a module (ex: CI system + module maintainer)
+  - Key identifiers can be used by verifiers to map to public key identifiers they have, and/or quickly reject a signature if it does not match.
+  
+- [X] The format used to encode signatures and related should be extensible
 
 ## Scratch notes
 
