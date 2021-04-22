@@ -143,9 +143,9 @@ The only content of a marker is a 16 byte random string.
 
 **Format of the signature section:**
 
-|                                                     |                       |              |
-| --------------------------------------------------- | --------------------- | ------------ |
-| `m = H(p1) || H(p1 || p2) || … || H(p1 || … || pn)` | _(optional)_ `key id` | `Sign(k, m)` |
+|                                               |                       |              |
+| --------------------------------------------- | --------------------- | ------------ |
+| `m = H(p1) ‖ H(p1 ‖ p2) ‖ … ‖ H(p1 ‖ … ‖ pn)` | _(optional)_ `key id` | `Sign(k, m)` |
 
 Signature verification for `{p1...pℓ}`, for any `ℓ ≤ n` :
 
@@ -163,10 +163,10 @@ An existing signature section should be skipped when computing the rolling hash.
 
 Updated signature section of an already signed module, on top of which an additional part, signed with another key, is appended:
 
-|                                                     |                        |                |
-| --------------------------------------------------- | ---------------------- | -------------- |
-| `m = H(p1) || H(p1 || p2) || … || H(p1 || … || pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
-| `m’ = H(p1 || … || pn || pn+1)`                     | _(optional)_ `key id'` | `Sign(k', m')` |
+|                                               |                        |                |
+| --------------------------------------------- | ---------------------- | -------------- |
+| `m = H(p1) ‖ H(p1 ‖ p2) ‖ … ‖ H(p1 ‖ … ‖ pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
+| `m’ = H(p1 ‖ … ‖ pn ‖ pn+1)`                  | _(optional)_ `key id'` | `Sign(k', m')` |
 
 *Note: In the simplified notation above, the markers have been omitted from the hash computation. But these sections should actually be included like other sections.*
 
