@@ -1,5 +1,19 @@
 # WebAssembly signatures
 
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [WebAssembly signatures](#webassembly-signatures)
+  - [Project scope](#project-scope)
+  - [Requirements and justifications](#requirements-and-justifications)
+  - [Discussed options](#discussed-options)
+  - [Scratch notes](#scratch-notes)
+  - [Appendix 1](#appendix-1)
+  - [Appendix 2](#appendix-2)
+
+<!-- /code_chunk_output -->
+
 ## Project scope
 
 This work is specifically about embedded digital signatures in WebAssembly modules, not about package/OCI signatures.
