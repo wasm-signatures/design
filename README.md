@@ -166,7 +166,7 @@ Updated signature section of an already signed module, on top of which an additi
 |                                               |                        |                |
 | --------------------------------------------- | ---------------------- | -------------- |
 | `m = H(p1) ‖ H(p1 ‖ p2) ‖ … ‖ H(p1 ‖ … ‖ pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
-| `m’ = H(p1 ‖ … ‖ pn ‖ pn+1)`                  | _(optional)_ `key id'` | `Sign(k', m')` |
+| `m’ = H(p1 ‖ … ‖ pn ‖ pn+1)`                  | _(optional)_ `key id’` | `Sign(k’, m’)` |
 
 *Note: In the simplified notation above, the markers have been omitted from the hash computation. But these sections should actually be included like other sections.*
 
