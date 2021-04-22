@@ -118,10 +118,11 @@ Related:
 
 ## Appendix 2
 
-**A single signature for multiple parts, still allowing verification of a subset and incremental updates.**
+**A single signature, still allowing verification of a subset and incremental updates.**
 
-Requires two custom section types, or a single section type and a bit to differentiate both:
-- A marker between two signed parts (consecutive sections)
+Requires two custom section types, or a single type with a bit to differentiate both:
+
+- A marker to delimit parts (consecutive sections)
 - The signatures themselves
 
 **Delimiting parts:**
@@ -150,7 +151,7 @@ The only content of a marker is a 16 byte random string.
 Signature verification for `{p1...pℓ}`, for any `ℓ ≤ n` :
 
 1. `v={}`
-2. Compute a rolling hash from the beginning, append its output to `v` everytime a marker is crossed
+2. Compute a rolling hash from the beginning, appending its output to `v` everytime a marker is crossed
 3. Immediately return an error if `v` is not a prefix of `m`
 4. Check that the signature is valid for `m`.
 
