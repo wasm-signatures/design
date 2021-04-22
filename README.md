@@ -14,8 +14,6 @@
 
 <!-- /code_chunk_output -->
 
-
-
 ## Project scope
 
 This work is specifically about embedded digital signatures in WebAssembly modules, not about package/OCI signatures.
