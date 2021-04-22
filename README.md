@@ -18,7 +18,7 @@ Relevant projects:
 
 ### Signatures may implement multiple signature algorithms
 - Compliance requirements
-- Public key size/signature size/verification CPU cost tradeoffs (ex: PQ schemes vs EdDSA)
+- Public key size/signature size/verification CPU cost tradeoffs (ex: post-quantum schemes vs EdDSA)
 - Code and key reuse (ex: ECDSA-SHA3 for blockchains already leveraging SHA3, EdDSA to use existing SSH keys)
 
 ### It should be possible to verify a module file before execution 
@@ -27,7 +27,7 @@ Relevant projects:
 
 ...to a potentially signed module so that one can verify the original module and the additional custom section independently
 
-- See Appendix 1. A user may want to add additional signed information (debug data, precompiled headers) to a signed module and then re-distribute. Users may or may not trust and choose to consume the additional information.
+- See [Appendix 1](#appendix-1). A user may want to add additional signed information (debug data, precompiled headers) to a signed module and then re-distribute. Users may or may not trust and choose to consume the additional information.
 
 ### Signatures should support streaming compilations
 
@@ -38,7 +38,7 @@ Relevant projects:
 - Required for key rotation
 - Keys may be short-term
 - There can be a signature for sections 1, 2, 3 and another one for sections 1, 2, 3, 4 in order to make section 4 optional, yet still verifiable when needed
-- Oak use case, where each signature represents a property
+- [Oak](http://projectoak.com) use case, where each signature represents a property
 - The ability to require multiple signers to trust a module (ex: CI system + module maintainer)
 - Key identifiers can be used by verifiers to map to public key identifiers they have, and/or quickly reject a signature if it does not match.
   
@@ -48,7 +48,7 @@ Relevant projects:
 
 - Should signatures have associated metadata/annotations?
 - Should the signature section include a timestamp, a module version, or more generally, should we define a minimal set of optional/required metadata that will be signed along with the rest of the module?
-- We may want the set of signature algorithms we support and the ones required by the WASI-crypto proposal to overlap.
+- We may want the set of signature algorithms we support and the ones required by the [WASI-crypto](https://github.com/jedisct1/WASI-crypto/blob/main/docs/wasi-crypto.md#algorithms) proposal to overlap.
 - Add new “description” and “usage” Custom Sections, to be defined in this working group, then presented to the WebAssembly core as a standalone proposal.
 
 ## Discussed options
@@ -73,7 +73,7 @@ Split sections into parts (consecutive sections, delimited by a marker) that can
 
 This allows complete and partial verification of a module using a single signature, as well as adding new custom sections with their signatures.
 
-See Appendix 2.
+See [Appendix 2](#appendix-2).
 
 ### (e) Include manifest in the “signature” section
 
