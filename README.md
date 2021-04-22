@@ -92,7 +92,7 @@ Use case for adding new Custom Sections *after* the original signature was gener
 | bytecode          | yes                          |
 | "signature" (`A`) |                              |
 
-1. Customer uploads Wasm module to the Wasm optimization service, which verifies that the Wasm module is signed by the provided public key.
+4. Customer uploads Wasm module to the Wasm optimization service, which verifies that the Wasm module is signed by the provided public key.
 “Wasm optimization” service compiles uploaded Wasm module (`compile(bytecode)`), appends it in a `precompiled_runtimeX` Custom Section, then signs the complete Wasm module (`sign(hash(bytecode+signatureA+precompiled_runtimeX))`), and appends the signature in a “signature” (`B`) Custom Section:
 
 | sections               | covered by "signature" (`A`) | covered by "signature" (`B`) |
@@ -102,3 +102,83 @@ Use case for adding new Custom Sections *after* the original signature was gener
 | `precompiled_runtimeX` |                              | yes                          |
 | "signature" (`B`)      |                              |                              |
 
+## Appendix 2
+
+A single signature for multiple parts, still allowing verification of a subset and incremental updates.
+
+Requires two custom section types, or a single section type and a bit to differentiate both:
+- A marker between two signed parts (consecutive sections)
+- The signatures themselves
+
+A module is split into parts, by inserting a small marker between them:
+
+| sections                                     |
+| -------------------------------------------- |
+| `p1` = Input part 1 (one or more sections)   |
+| _Marker_                                     |
+| `p2` = Input part 2 (one or more sections)   |
+| ...                                          |
+| _Marker_                                     |
+| `pn` = Input part `n` (one or more sections) |
+
+If partial verification is not required, no markers are necessary.
+
+The only content of a marker is a 16 byte random string.
+
+Format of the signature section:
+
+|                                                     |                       |              |
+| --------------------------------------------------- | --------------------- | ------------ |
+| `m = H(p1) || H(p1 || p2) || … || H(p1 || … || pn)` | _(optional)_ `key id` | `Sign(k, m)` |
+
+Signature verification for `{p1...pℓ}`, for any `ℓ ≤ n` :
+
+1. `v={}`
+2. Compute a rolling hash from the beginning, append its output to `v` everytime a marker is crossed
+3. Immediately return an error if `v` is not a prefix of `m`
+4. Check that the signature is valid for `m`
+
+An existing signature section should be skipped when computing the rolling hash.
+
+Adding a part `pn+1`, signed with a different key:
+
+1. A signature mark is added before the additional sections
+2. A new signature entry is appended
+
+Example of a previously signed module, on top of which an additional part, signed with another key, are added:
+
+|                                                     |                        |                |
+| --------------------------------------------------- | ---------------------- | -------------- |
+| `m = H(p1) || H(p1 || p2) || … || H(p1 || … || pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
+| `m’ = H(p1 || … || pn || pn+1)`                     | _(optional)_ `key id'` | `Sign(k', m')` |
+
+**Note:** In the simplified notation above, the signature marks have been omitted from the hash computation. But these sections should actually be included like other sections.
+
+Properties:
+
+- The placement of the signature section doesn’t matter.
+- Reusing a key doesn’t require an additional row, only an update of `m` and the signature.
+- Verifiers don't learn hashes of removed sections due to markers containing random bits.
+
+Example schema for the signature section:
+
+```json
+{
+    "version": "...",
+    "entries": [
+        {
+            "m": "...",
+            "signatures": [
+   {
+                "key_id?": "...", // optional
+                "signature": "..."
+               }
+		 ]
+        }
+    ]
+}
+```
+
+Properties:
+- A section set can be signed with multiple keys
+- Multiple sets can be signed incrementally
