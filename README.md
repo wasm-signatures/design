@@ -1,4 +1,4 @@
-# WebAssembly signatures
+# WebAssembly modules signatures
 
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=6 orderedList=false} -->
 
