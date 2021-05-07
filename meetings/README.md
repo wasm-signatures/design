@@ -2,7 +2,7 @@
 
 Meetings are held every other Friday at 3:00 PM UTC.
 
-The link to the calendar event is here https://calendar.google.com/event?action=TEMPLATE&tmeid=MzJ0MnFmMW1kbWNlMGNucXU0OGVwMGJ0M21fMjAyMTA1MDdUMTUwMDAwWiBhc3JhYUBnb29nbGUuY29t&tmsrc=asraa%40google.com&scp=ALL
+The link to the calendar is here https://calendar.google.com/calendar/u/0?cid=Y18wbjVqN3I3MWJqY2ZsMWljdWtxNjVrZzZia0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t
 
 ## Meetings
 
