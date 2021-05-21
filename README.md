@@ -4,7 +4,7 @@
 
 <!-- code_chunk_output -->
 
-- [WebAssembly signatures](#webassembly-signatures)
+- [WebAssembly modules signatures](#webassembly-modules-signatures)
   - [Project scope](#project-scope)
   - [Requirements and justifications](#requirements-and-justifications)
   - [Discussed options](#discussed-options)
@@ -57,6 +57,10 @@ Related:
   
 - [X] The format used to encode signatures and related should be extensible
 
+- [X] Arbitrary sections may not be signed (partial signature)
+
+- [X] Arbitrary sections may be ignored during verification (partial verification)
+
 ## Discussed options
 
 - **(a) Sign complete bytecode**
@@ -76,7 +80,7 @@ Related:
 
 - **(d) Sign hashes of consecutive sections**
 
-  Split sections into parts (consecutive sections, delimited by a marker) that can be signed and verified independently, and sign the concatenation of their hashes.
+  Split sections into parts (consecutive sections, delimited by a delimiter) that can be signed and verified independently, and sign the concatenation of their hashes.
 
   This allows complete and partial verification of a module using a single signature, as well as adding new custom sections with their signatures.
 
@@ -118,86 +122,139 @@ Related:
 
 ## Appendix 2
 
-**A single signature, still allowing verification of a subset and incremental updates.**
+This signature format allows full and partial signatures, as well as incremental updates.
 
-Requires two custom section types, or a single type with a bit to differentiate both:
+It requires three custom section types, or a byte to differentiate three different cases:
 
-- A marker to delimit parts (consecutive sections)
+- A header, to indicate the existence of a signature, and the hash function to use.
+- A delimiter to separate parts (consecutive sections)
 - The signatures themselves
 
-**Delimiting parts:**
+| sections                                  |
+| ----------------------------------------- |
+| signed module header                      |
+| part _(one or more consecutive sections)_ |
+| delimiter                                 |
+| part _(one or more consecutive sections)_ |
+| delimiter                                 |
+| ...                                       |
+| part _(one or more consecutive sections)_ |
+| delimiter                                 |
+| signature                                 |
 
-A module can be split into parts, by inserting a small marker between them:
+**Signed module header:**
+
+A signed module starts with a custom section containing:
+
+- An identifier representing the version of the specification the module was signed with.
+- An identifier representing the hash function whose output will be signed.
+
+That custom section must be the first section of a signed module.
+
+**Parts and delimiters:**
+
+Following the header, a module is split into one or more parts (one or more consecutive sections). 
+Each part is followd by a delimiter: a section containing a 16 byte random string.
 
 | sections                                       |
 | ---------------------------------------------- |
-| `p1` = Input part 1 _(one or more sections)_   |
-| _Marker_                                       |
-| `p2` = Input part 2 _(one or more sections)_   |
+| `p1` = input part 1 _(one or more sections)_   |
+| `d1` = delimiter 1                             |
+| `p2` = input part 2 _(one or more sections)_   |
+| `d2` = delimiter 2                             |
 | ...                                            |
-| _Marker_                                       |
-| `pn` = Input part `n` _(one or more sections)_ |
+| `pn` = input part `n` _(one or more sections)_ |
+| `dn` = delimiter `n`                           |
 
-If partial verification is not required, no markers are necessary.
+**Signature section:**
 
-The only content of a marker is a 16 byte random string.
+A hash is computed for all the parts to be signed:
 
-**Format of the signature section:**
+`hn = H(pn‖dn)`
 
-|                                               |                       |              |
-| --------------------------------------------- | --------------------- | ------------ |
-| `m = H(p1) ‖ H(p1 ‖ p2) ‖ … ‖ H(p1 ‖ … ‖ pn)` | _(optional)_ `key id` | `Sign(k, m)` |
+A signature is computed on the concatenation of these hashes:
 
-Signature verification for `{p1...pℓ}`, for any `ℓ ≤ n` :
+`m = h1 ‖ h2 ‖ … ‖ hn`
+`s = Sign(k, m)`
 
-1. `v={}`
-2. Compute a rolling hash from the beginning, appending its output to `v` everytime a marker is crossed
-3. Immediately return an error if `v` is not a prefix of `m`
-4. Check that the signature is valid for `m`.
+The signature section of an entire module signed using a single key has the following structure:
 
-An existing signature section should be skipped when computing the rolling hash.
+|                                          |                       |              |
+| ---------------------------------------- | --------------------- | ------------ |
+| `m = H(p1‖d1) ‖ H(p2‖d2) ‖ … ‖ H(p1‖dn)` | _(optional)_ `key id` | `Sign(k, m)` |
 
-**Adding a part `pn+1`, signed with a different key:**
+That section must be the last section of a module.
 
-1. A marker is added before the additional sections
-2. A new signature entry is appended.
-
-Updated signature section of an already signed module, on top of which an additional part, signed with another key, is appended:
-
-|                                               |                        |                |
-| --------------------------------------------- | ---------------------- | -------------- |
-| `m = H(p1) ‖ H(p1 ‖ p2) ‖ … ‖ H(p1 ‖ … ‖ pn)` | _(optional)_ `key id`  | `Sign(k, m)`   |
-| `m’ = H(p1 ‖ … ‖ pn ‖ pn+1)`                  | _(optional)_ `key id’` | `Sign(k’, m’)` |
-
-*Note: In the simplified notation above, the markers have been omitted from the hash computation. But these sections should actually be included like other sections.*
-
-Reusing a key doesn’t require an additional row, only an update of `m` and the signature.
-
-**Properties:**
-
-- Verification of the data between the beginning of a module and any marker (or the end of the module) can be made using a single signature.
-- Verifiers don't learn any information about removed sections due to markers containing random bits.
-
+One or more signatures can be associated with `m`, allowing multiple parties to sign the same data.
 
 **Example schema for the signature section:**
 
 ```json
-{
-    "version": "...",
-    "entries": [
-        {
-            "hash_function": "...",
-            "m": "...",
-            "signatures": [
-                {
-                    "key_id?": "...",
-                    "signature": "..."
-                }
-            ]
-        }
-    ]
-}
+[
+    {
+        "m": "...",
+        "signatures": [
+            {
+                "key_id?": "...",
+                "signature": "..."
+            }
+        ]
+    }
+]
 ```
 
-- A section set can be signed with multiple keys
-- Multiple sets can be signed incrementally.
+**Signature verification algorithm for an entire module:**
+
+1. Verify the presence of the header, extract the specification version and hash function to use
+2. Split `m` (included in the signature) into `h1 … hn`
+3. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
+4. Return an error if the number of the number of hashes doesn't match the number of parts.
+5. Verify that the signature is valid for `m`.
+
+**Partial signatures:**
+
+The above format is compatible with partial signatures, i.e. signatures ignoring one or more parts. In order to do so, a signer only includes the hashes of relevant parts.
+
+By default, partial signatures must be ignored by WebAssembly runtimes. An explicit configuration is required to accept a partially signed module.
+
+**Partial verification:**
+
+The format is also compatible with partial verification, i.e. verification of an arbitrary subset of a module:
+
+1. Verify the presence of the header, extract the specification version and hash function to use
+2. Split `m` (included in the signature) into `h1 … hn`
+3. Read the module, computing the hash of every `(pi, di)` tuple to verify, immediately returning an error if the output doesn't match `hi`
+4. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
+5. Verify that the signature is valid for `m`.
+
+Notes:
+
+- Subset verification doesn't require additional signatures, as verification is always made using the full set `m`.
+- Verifiers don't learn any information about removed sections due to delimiters containing random bits.
+
+**Multiple signatures:**
+
+The format also supports:
+
+- Multiple signatures for a given section set (`m`). Signatures can be added incrementally, without any overhead beyond the signature sizes.
+- Arbitrary section subsets and signatures combinations.
+- Signature verification even if sections have been reordered.
+
+**Implementation complexity:**
+
+We expect the most common scenario to be entire modules being signed and verified, using one or more signatures.
+
+Supporting additional use cases introduces implementation complexity, that can be summarized as follows:
+
+| Complexity | Signatures | Signed sections | Verified sections | Arbitrary combinations | Reordering |
+| ---------- | ---------- | --------------- | ----------------- | ---------------------- | ---------- |
+| 1          | 1          | all             | all               | no                     | no         |
+| 2          | 1+         | all             | all               | no                     | no         |
+| 3          | 1+         | any subset      | signed subset     | no                     | no         |
+| 4          | 1+         | any subset      | any subset        | no                     | no         |
+| 5          | 1+         | any subset      | any subset        | yes                    | no         |
+| 6          | 1+         | any subset      | any subset        | yes                    | yes        |
+
+The specification will define what implementations must, should and may implement based on real-world requirements.
+
+All support levels share the same signature format, so "must" and "should" feature sets can be updated incrementally.
