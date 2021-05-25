@@ -39,10 +39,10 @@ Related:
   - Public key size/signature size/verification CPU cost tradeoffs (ex: post-quantum schemes vs EdDSA)
   - Code and key reuse (ex: ECDSA-SHA3 for blockchains already leveraging SHA3, EdDSA to use existing SSH keys)
 
-- [X] It should be possible to verify a module file before execution 
+- [X] It should be possible to verify a module file before execution
 
 - [X] It should be possible to add signed custom sections to a potentially signed module so that one can verify the original module and the additional custom section independently
-  
+
   See [Appendix 1](#appendix-1). A user may want to add additional signed information (debug data, precompiled headers) to a signed module and then re-distribute. Users may or may not trust and choose to consume the additional information.
 
 - [X] Signatures should support streaming compilations
@@ -54,7 +54,7 @@ Related:
   - [Oak](http://projectoak.com) use case, where each signature represents a property
   - The ability to require multiple signers to trust a module (ex: CI system + module maintainer)
   - Key identifiers can be used by verifiers to map to public key identifiers they have, and/or quickly reject a signature if it does not match.
-  
+
 - [X] The format used to encode signatures and related should be extensible
 
 - [X] Arbitrary sections may not be signed (partial signature)
@@ -70,7 +70,7 @@ Related:
 - **(b) Sign all bytecode preceding the “signature” Section**
 
   This allows adding new Custom Sections after the signature was created.
-  See [Appendix 1](#appendix-1). 
+  See [Appendix 1](#appendix-1).
 
 - **(c) Sign all bytecode since the previous “signature” section**
 
@@ -124,15 +124,14 @@ Related:
 
 This signature format allows full and partial signatures, as well as incremental updates.
 
-It requires three custom section types, or a byte to differentiate three different cases:
+It requires two custom section types, or a byte to differentiate three different cases:
 
-- A header, to indicate the existence of a signature, and the hash function to use.
+- A signature section.
 - A delimiter to separate parts (consecutive sections)
-- The signatures themselves
 
 | sections                                  |
 | ----------------------------------------- |
-| signed module header                      |
+| signatures                                |
 | part _(one or more consecutive sections)_ |
 | delimiter                                 |
 | part _(one or more consecutive sections)_ |
@@ -140,20 +139,10 @@ It requires three custom section types, or a byte to differentiate three differe
 | ...                                       |
 | part _(one or more consecutive sections)_ |
 | delimiter                                 |
-| signature                                 |
-
-**Signed module header:**
-
-A signed module starts with a custom section containing:
-
-- An identifier representing the version of the specification the module was signed with.
-- An identifier representing the hash function whose output will be signed.
-
-That custom section must be the first section of a signed module.
 
 **Parts and delimiters:**
 
-Following the header, a module is split into one or more parts (one or more consecutive sections). 
+A module is split into one or more parts (one or more consecutive sections).
 Each part is followd by a delimiter: a section containing a 16 byte random string.
 
 | sections                                       |
@@ -166,7 +155,18 @@ Each part is followd by a delimiter: a section containing a 16 byte random strin
 | `pn` = input part `n` _(one or more sections)_ |
 | `dn` = delimiter `n`                           |
 
+If a signature covers the entire module (i.e. there is only one part), the delimiter
+is optional.
+
 **Signature section:**
+
+A signed module starts with a custom section containing:
+
+- An identifier representing the version of the specification the module was signed with.
+- An identifier representing the hash function whose output will be signed.
+- Hashes of parts being signed, and their signatures.
+
+That custom section must be the first section of a signed module.
 
 A hash is computed for all the parts to be signed:
 
@@ -183,7 +183,7 @@ The signature section of an entire module signed using a single key has the foll
 | ---------------------------------------- | --------------------- | ------------ |
 | `m = H(p1‖d1) ‖ H(p2‖d2) ‖ … ‖ H(p1‖dn)` | _(optional)_ `key id` | `Sign(k, m)` |
 
-That section must be the last section of a module.
+That section must be the first section of a module.
 
 One or more signatures can be associated with `m`, allowing multiple parties to sign the same data.
 
@@ -205,11 +205,12 @@ One or more signatures can be associated with `m`, allowing multiple parties to 
 
 **Signature verification algorithm for an entire module:**
 
-1. Verify the presence of the header, extract the specification version and hash function to use
-2. Split `m` (included in the signature) into `h1 … hn`
-3. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
-4. Return an error if the number of the number of hashes doesn't match the number of parts.
-5. Verify that the signature is valid for `m`.
+1. Verify the presence of the signature section, extract the specification version, the hash function to use and the signatures.
+2. Check that at least one of the signatures is valid for `m`. If not, return an error and stop.
+3. Split `m` (included in the signature) into `h1 … hn`
+4. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
+5. Return an error if the number of the number of hashes doesn't match the number of parts.
+6. Verify that the signature is valid for `m`.
 
 **Partial signatures:**
 
@@ -221,11 +222,12 @@ By default, partial signatures must be ignored by WebAssembly runtimes. An expli
 
 The format is also compatible with partial verification, i.e. verification of an arbitrary subset of a module:
 
-1. Verify the presence of the header, extract the specification version and hash function to use
-2. Split `m` (included in the signature) into `h1 … hn`
-3. Read the module, computing the hash of every `(pi, di)` tuple to verify, immediately returning an error if the output doesn't match `hi`
-4. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
-5. Verify that the signature is valid for `m`.
+1. Verify the presence of the header, extract the specification version, the hash function to use and the signatures.
+2. Check that at least one of the signatures is valid for `m`. If not, return an error and stop.
+3. Split `m` (included in the signature) into `h1 … hn`
+4. Read the module, computing the hash of every `(pi, di)` tuple to verify, immediately returning an error if the output doesn't match `hi`
+5. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
+6. Verify that the signature is valid for `m`.
 
 Notes:
 
