@@ -175,7 +175,7 @@ A hash is computed for all the parts to be signed:
 A signature is computed on the concatenation of these hashes:
 
 `m = h1 ‖ h2 ‖ … ‖ hn`
-`s = Sign(k, m)`
+`s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ m)`
 
 The signature section of an entire module signed using a single key has the following structure:
 
