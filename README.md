@@ -156,7 +156,7 @@ Each part is followd by a delimiter: a section containing a 16 byte random strin
 | `dn` = delimiter `n`                           |
 
 If a signature covers the entire module (i.e. there is only one part), the delimiter
-is optional.
+is optional. However, its absence prevents additional sections to be added and signed later.
 
 **Signature section:**
 
@@ -174,25 +174,26 @@ A hash is computed for all the parts to be signed:
 
 A signature is computed on the concatenation of these hashes:
 
-`m = h1 ‖ h2 ‖ … ‖ hn`
-`s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ m)`
+`hashes = h1 ‖ h2 ‖ … ‖ hn`
+
+`s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ hashes)`
 
 The signature section of an entire module signed using a single key has the following structure:
 
-|                                          |                       |              |
-| ---------------------------------------- | --------------------- | ------------ |
-| `m = H(p1‖d1) ‖ H(p2‖d2) ‖ … ‖ H(p1‖dn)` | _(optional)_ `key id` | `Sign(k, m)` |
+|                                               |                       |                   |
+| --------------------------------------------- | --------------------- | ----------------- |
+| `hashes = H(p1‖d1) ‖ H(p2‖d2) ‖ … ‖ H(p1‖dn)` | _(optional)_ `key id` | `Sign(k, hashes)` |
 
 That section must be the first section of a module.
 
-One or more signatures can be associated with `m`, allowing multiple parties to sign the same data.
+One or more signatures can be associated with `hashes`, allowing multiple parties to sign the same data.
 
-**Example schema for the signature section:**
+**Example schema for the hashes and signatures:**
 
 ```json
 [
     {
-        "m": "...",
+        "hashes": "...",
         "signatures": [
             {
                 "key_id?": "...",
@@ -206,11 +207,11 @@ One or more signatures can be associated with `m`, allowing multiple parties to 
 **Signature verification algorithm for an entire module:**
 
 1. Verify the presence of the signature section, extract the specification version, the hash function to use and the signatures.
-2. Check that at least one of the signatures is valid for `m`. If not, return an error and stop.
-3. Split `m` (included in the signature) into `h1 … hn`
+2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
+3. Split `hashes` (included in the signature) into `h1 … hn`
 4. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
 5. Return an error if the number of the number of hashes doesn't match the number of parts.
-6. Verify that the signature is valid for `m`.
+6. Verify that the signature is valid for `hashes`.
 
 **Partial signatures:**
 
@@ -223,22 +224,22 @@ By default, partial signatures must be ignored by WebAssembly runtimes. An expli
 The format is also compatible with partial verification, i.e. verification of an arbitrary subset of a module:
 
 1. Verify the presence of the header, extract the specification version, the hash function to use and the signatures.
-2. Check that at least one of the signatures is valid for `m`. If not, return an error and stop.
-3. Split `m` (included in the signature) into `h1 … hn`
+2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
+3. Split `hashes` (included in the signature) into `h1 … hn`
 4. Read the module, computing the hash of every `(pi, di)` tuple to verify, immediately returning an error if the output doesn't match `hi`
 5. Return an error if the number of the number of hashes doesn't match the number of parts to verify.
-6. Verify that the signature is valid for `m`.
+6. Verify that the signature is valid for `hashes`.
 
 Notes:
 
-- Subset verification doesn't require additional signatures, as verification is always made using the full set `m`.
+- Subset verification doesn't require additional signatures, as verification is always made using the full set `hashes`.
 - Verifiers don't learn any information about removed sections due to delimiters containing random bits.
 
 **Multiple signatures:**
 
 The format also supports:
 
-- Multiple signatures for a given section set (`m`). Signatures can be added incrementally, without any overhead beyond the signature sizes.
+- Multiple signatures for a given section set (`hashes`). Signatures can be added incrementally, without any overhead beyond the signature sizes.
 - Arbitrary section subsets and signatures combinations.
 - Signature verification even if sections have been reordered.
 
@@ -260,3 +261,18 @@ Supporting additional use cases introduces implementation complexity, that can b
 The specification will define what implementations must, should and may implement based on real-world requirements.
 
 All support levels share the same signature format, so "must" and "should" feature sets can be updated incrementally.
+
+**Detached signatures:**
+
+Signatures can also be detached, i.e. not stored in the module itself, but provided separately.
+
+A detached signature is equivalent to the payload of a signature section.
+
+Given an existing signed module with an embedded signature, the signature can be detached by:
+
+- Copying the payload of the signature section
+- Removing the signature section.
+
+Reciprocally, a detached signature can be embedded by adding a signature section, whose payload is a copy of the detached signature.
+
+Implementations should accept signatures as an optional parameter. If this parameter is not defined, the signature is assumed to be embedded, but the verification function remains the same.
