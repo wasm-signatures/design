@@ -346,17 +346,17 @@ is serialized as:
 
 ```text
 custom_section("",
-  custom_section("hashes", "...") ǁ
-  custom_section("signatures",
-    custom_section("",
-      custom_section("key_id_1", "...") ǁ
-      custom_section("signature_1", "...")
+    custom_section("hashes", "...") ǁ
+    custom_section("signatures",
+        custom_section("",
+            custom_section("key_id_1", "...") ǁ
+            custom_section("signature_1", "...")
+        )
+        custom_section("",
+            custom_section("key_id_2", "...") ǁ
+            custom_section("signature_2", "...")
+        )
     )
-    custom_section("",
-      custom_section("key_id_2", "...") ǁ
-      custom_section("signature_2", "...")
-    )
-  )
 )
 ```
 
