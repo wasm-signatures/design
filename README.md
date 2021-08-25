@@ -11,6 +11,7 @@
   - [Scratch notes](#scratch-notes)
   - [Appendix 1](#appendix-1)
   - [Appendix 2](#appendix-2)
+  - [Appendix 3](#appendix-3)
 
 <!-- /code_chunk_output -->
 
@@ -164,7 +165,7 @@ A signed module starts with a custom section containing:
 
 - An identifier representing the version of the specification the module was signed with.
 - An identifier representing the hash function whose output will be signed.
-- Hashes of parts being signed, and their signatures.
+- Hashes of parts being signed, and their signatures, serialized using nested custom sections as documented in [Appendix 3](#appendix-3).
 
 That custom section must be the first section of a signed module.
 
@@ -285,9 +286,9 @@ Identifier for the current version of the specification: `0x01`
 
 A conformant implementation must include support for the following hash functions:
 
-| Function | Identifier   |
-| -------- | ------------ |
-| SHA-256  | `0x01`       |
+| Function | Identifier |
+| -------- | ---------- |
+| SHA-256  | `0x01`     |
 
 **Signature algorithms and key serialization:**
 
@@ -297,10 +298,10 @@ For interoperability purposes, a conformant implementation must include support 
 
 Public and private keys must include the algorithm and parameters they were created for.
 
-| Key type           | Serialized key size  | Identifier   |
-| ------------------ | -------------------- | ------------ |
-| Ed25519 public key | 1 + 32 bytes         | `0x01`       |
-| Ed25519 key pair   | 1 + 64 bytes         | `0x81`       |
+| Key type           | Serialized key size | Identifier |
+| ------------------ | ------------------- | ---------- |
+| Ed25519 public key | 1 + 32 bytes        | `0x01`     |
+| Ed25519 key pair   | 1 + 64 bytes        | `0x81`     |
 
 Representation of Ed25519 keys:
 
@@ -313,3 +314,54 @@ Representation of Ed25519 keys:
 `0x81 ‖ secret key (32 bytes) ‖ public key (32 bytes)`
 
 Implementations may support additional signatures schemes and key encoding formats.
+
+**Serialization of structured data:**
+
+Structured data is serialized by nesting custom sections.
+
+A `(key, value)` pair is stored in a custom section whose name matches `key` and the payload is set to `value`.
+List elements are custom sections with an empty name.
+
+The following JSON representation of an object representing a set of hashes and their signatures:
+
+```json
+[
+    {
+        "hashes": ...,
+        "signatures": [
+           {
+               "key_id_1": ...,
+               "signature_1": ...
+           },
+           {
+               "key_id_2": ...,
+               "signature_2": ...
+           }
+        ]
+    }
+]
+```
+
+is serialized as:
+
+```text
+custom_section("signed_parts_set",
+  custom_section("",
+    custom_section("hashes", ...) ǁ
+    custom_section("signatures",
+      custom_section("",
+        custom_section("key_id_1", ...) ǁ
+        custom_section("signature_1", ...)
+      )
+      custom_section("",
+        custom_section("key_id_2", ...) ǁ
+        custom_section("signature_2", ...)
+      )
+    )
+  )
+)
+```
+
+`custom_section(name, payload)` outputs a custom section named `name` with payload `payload`.
+
+This serialization format can easily be implemented by reusing mechanisms already present in WebAssembly runtimes.
