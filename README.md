@@ -304,10 +304,10 @@ Representation of Ed25519 keys:
 
 - Ed25519 public key:
 
-`| 0x01 | public key (32 bytes) |`
+`0x01 ‖ public key (32 bytes)`
 
 - Ed25519 key pair:
 
-`| 0x81 | secret key (32 bytes) | public key (32 bytes)`
+`0x81 ‖ secret key (32 bytes) ‖ public key (32 bytes)`
 
 Implementations may support additional signatures schemes and key encoding formats.
