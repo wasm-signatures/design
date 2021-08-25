@@ -276,3 +276,38 @@ Given an existing signed module with an embedded signature, the signature can be
 Reciprocally, a detached signature can be embedded by adding a signature section, whose payload is a copy of the detached signature.
 
 Implementations should accept signatures as an optional parameter. If this parameter is not defined, the signature is assumed to be embedded, but the verification function remains the same.
+
+**Algorithms and identifiers:**
+
+Identifier for the current version of the specification: `0x01`
+
+A conformant implementation must include support for the following hash functions:
+
+| Function | Identifier   |
+| -------- | ------------ |
+| SHA-256  | `0x01`       |
+
+**Signature algorithms and key serialization:**
+
+For interoperability purposes, a conformant implementation must include support for the following signature systems:
+
+- Ed25519 (RFC8032)
+
+Public and private keys must include the algorithm and parameters they were created for.
+
+| Key type           | Serialized key size  | Identifier   |
+| ------------------ | -------------------- | ------------ |
+| Ed25519 public key | 1 + 32 bytes         | `0x01`       |
+| Ed25519 key pair   | 1 + 64 bytes         | `0x81`       |
+
+Representation of Ed25519 keys:
+
+- Ed25519 public key:
+
+`| 0x01 | public key (32 bytes) |`
+
+- Ed25519 key pair:
+
+`| 0x81 | secret key (32 bytes) | public key (32 bytes)`
+
+Implementations may support additional signatures schemes and key encoding formats.
