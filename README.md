@@ -327,15 +327,15 @@ The following JSON representation of an object representing a set of hashes and 
 ```json
 [
     {
-        "hashes": ...,
+        "hashes": "...",
         "signatures": [
            {
-               "key_id_1": ...,
-               "signature_1": ...
+               "key_id_1": "...",
+               "signature_1": "..."
            },
            {
-               "key_id_2": ...,
-               "signature_2": ...
+               "key_id_2": "...",
+               "signature_2": "..."
            }
         ]
     }
@@ -347,15 +347,15 @@ is serialized as:
 ```text
 custom_section("signed_parts_set",
   custom_section("",
-    custom_section("hashes", ...) ǁ
+    custom_section("hashes", "...") ǁ
     custom_section("signatures",
       custom_section("",
-        custom_section("key_id_1", ...) ǁ
-        custom_section("signature_1", ...)
+        custom_section("key_id_1", "...") ǁ
+        custom_section("signature_1", "...")
       )
       custom_section("",
-        custom_section("key_id_2", ...) ǁ
-        custom_section("signature_2", ...)
+        custom_section("key_id_2", "...") ǁ
+        custom_section("signature_2", "...")
       )
     )
   )
