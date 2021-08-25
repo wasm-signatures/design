@@ -277,6 +277,8 @@ Reciprocally, a detached signature can be embedded by adding a signature section
 
 Implementations should accept signatures as an optional parameter. If this parameter is not defined, the signature is assumed to be embedded, but the verification function remains the same.
 
+## Appendix 3
+
 **Algorithms and identifiers:**
 
 Identifier for the current version of the specification: `0x01`
