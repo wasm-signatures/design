@@ -125,10 +125,12 @@ Related:
 
 This signature format allows full and partial signatures, as well as incremental updates.
 
-It requires two custom section types, or a byte to differentiate three different cases:
+Two custom section types are required for this signature format:
 
-- A signature section.
-- A delimiter to separate parts (consecutive sections)
+- Custom sections named `signature`, storing signature data, when this information is embedded in the module.
+- Custom sections named `signature_delimiter`, separating consecutive sections that can be signed and verified independently.
+
+Example structure of a module with an embedded signature and delimiters:
 
 | sections                                  |
 | ----------------------------------------- |
@@ -144,7 +146,7 @@ It requires two custom section types, or a byte to differentiate three different
 **Parts and delimiters:**
 
 A module is split into one or more parts (one or more consecutive sections).
-Each part is followd by a delimiter: a section containing a 16 byte random string.
+Each part is followd by a delimiter. A delimiter is a custom section named `signature_delimiter`, containing a 16 byte random string.
 
 | sections                                       |
 | ---------------------------------------------- |
@@ -156,18 +158,16 @@ Each part is followd by a delimiter: a section containing a 16 byte random strin
 | `pn` = input part `n` _(one or more sections)_ |
 | `dn` = delimiter `n`                           |
 
-If a signature covers the entire module (i.e. there is only one part), the delimiter
-is optional. However, its absence prevents additional sections to be added and signed later.
+If a signature covers the entire module (i.e. there is only one part), the delimiter is optional.
+However, its absence prevents additional sections to be added and signed later.
 
-**Signature section:**
+**Signature data:**
 
-A signed module starts with a custom section containing:
+The signature data is a concatenation of the following:
 
 - An identifier representing the version of the specification the module was signed with.
 - An identifier representing the hash function whose output will be signed.
-- Hashes of parts being signed, and their signatures, serialized using nested custom sections as documented in [Appendix 3](#appendix-3).
-
-That custom section must be the first section of a signed module.
+- A sequence of hashes and their signatures.
 
 A hash is computed for all the parts to be signed:
 
@@ -179,31 +179,31 @@ A signature is computed on the concatenation of these hashes:
 
 `s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ hashes)`
 
-The signature section of an entire module signed using a single key has the following structure:
-
-|                                               |                       |                   |
-| --------------------------------------------- | --------------------- | ----------------- |
-| `hashes = H(p1‖d1) ‖ H(p2‖d2) ‖ … ‖ H(p1‖dn)` | _(optional)_ `key id` | `Sign(k, hashes)` |
-
-That section must be the first section of a module.
-
 One or more signatures can be associated with `hashes`, allowing multiple parties to sign the same data.
 
-**Example schema for the hashes and signatures:**
+The signature data can either be stored in the payload of a custom section named `signature`, or provided separately.
 
-```json
-[
-    {
-        "hashes": "...",
-        "signatures": [
-            {
-                "key_id?": "...",
-                "signature": "..."
-            }
-        ]
-    }
-]
-```
+If embedded in a module, the signature data must appear only once, and be the first section of the module.
+
+It contains a sequence of signatures, where the end of the last signature must coincide with the last byte of the signature data.
+
+| Field           | Type         | Description                                       |
+| --------------- | ------------ | ------------------------------------------------- |
+| spec_version    | `byte`       | Specification version (`0x01`)                    |
+| hash_fn         | `byte`       | Hash function identifier (`0x01` for SHA-256)     |
+| hashes_len      | `varuint32`  | Length of the concatenated hashes in bytes        |
+| hashes          | `bytes`      | Concatenated hashes of the signed sections        |
+| signature_count | `varuint32`  | Number of signatures                              |
+| signatures      | `signature*` | Sequence of `signature_count` `signature` records |
+
+where a `signature` is encoded as:
+
+| Field         | Type        | Description                                                |
+| ------------- | ----------- | ---------------------------------------------------------- |
+| key_id_len    | `varuint32` | Public key identifier length in bytes (can be `0`)         |
+| key_id        | `bytes`     | Public key identifier                                      |
+| signature_len | `varuint32` | Signature length in bytes                                  |
+| signature     | `bytes`     | Signature for `hashes` that can be verified using `key_id` |
 
 **Signature verification algorithm for an entire module:**
 
@@ -244,6 +244,21 @@ The format also supports:
 - Arbitrary section subsets and signatures combinations.
 - Signature verification even if sections have been reordered.
 
+**Equivalence between embedded and detached signatures:**
+
+Signatures can be embedded in a module, or detached, i.e. not stored in the module itself but provided separately.
+
+A detached signature is equivalent to the payload of a `signature` custom section.
+
+Given an existing signed module with an embedded signature, the signature can be detached by:
+
+- Copying the payload of the `signature` custom section
+- Removing the `signature` custom section.
+
+Reciprocally, a detached signature can be embedded by adding a `signature` custom section, whose payload is a copy of the detached signature.
+
+Implementations should accept signatures as an optional parameter. If this parameter is not defined, the signature is assumed to be embedded, but the verification function remains the same.
+
 **Implementation complexity:**
 
 We expect the most common scenario to be entire modules being signed and verified, using one or more signatures.
@@ -262,21 +277,6 @@ Supporting additional use cases introduces implementation complexity, that can b
 The specification will define what implementations must, should and may implement based on real-world requirements.
 
 All support levels share the same signature format, so "must" and "should" feature sets can be updated incrementally.
-
-**Detached signatures:**
-
-Signatures can also be detached, i.e. not stored in the module itself, but provided separately.
-
-A detached signature is equivalent to the payload of a signature section.
-
-Given an existing signed module with an embedded signature, the signature can be detached by:
-
-- Copying the payload of the signature section
-- Removing the signature section.
-
-Reciprocally, a detached signature can be embedded by adding a signature section, whose payload is a copy of the detached signature.
-
-Implementations should accept signatures as an optional parameter. If this parameter is not defined, the signature is assumed to be embedded, but the verification function remains the same.
 
 ## Appendix 3
 
@@ -314,52 +314,3 @@ Representation of Ed25519 keys:
 `0x81 ‖ secret key (32 bytes) ‖ public key (32 bytes)`
 
 Implementations may support additional signatures schemes and key encoding formats.
-
-**Serialization of structured data:**
-
-Structured data is serialized by nesting custom sections.
-
-A `(key, value)` pair is stored in a custom section whose name matches `key` and the payload is set to `value`.
-List elements are custom sections with an empty name.
-
-The following JSON representation of an object representing a set of hashes and their signatures:
-
-```json
-[
-    {
-        "hashes": "...",
-        "signatures": [
-           {
-               "key_id_1": "...",
-               "signature_1": "..."
-           },
-           {
-               "key_id_2": "...",
-               "signature_2": "..."
-           }
-        ]
-    }
-]
-```
-
-is serialized as:
-
-```text
-custom_section("",
-    custom_section("hashes", "...") ǁ
-    custom_section("signatures",
-        custom_section("",
-            custom_section("key_id_1", "...") ǁ
-            custom_section("signature_1", "...")
-        )
-        custom_section("",
-            custom_section("key_id_2", "...") ǁ
-            custom_section("signature_2", "...")
-        )
-    )
-)
-```
-
-`custom_section(name, payload)` outputs a custom section named `name` with payload `payload`.
-
-This serialization format can easily be implemented by reusing mechanisms already present in WebAssembly runtimes.
