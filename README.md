@@ -146,7 +146,7 @@ Example structure of a module with an embedded signature and delimiters:
 
 **Parts and delimiters:**
 
-A module is split into one or more parts (one or more consecutive sections).
+A module can be split into one or more parts (one or more consecutive sections).
 Each part is followd by a delimiter. A delimiter is a custom section named `signature_delimiter`, containing a 16 byte random string.
 
 | sections                                       |
@@ -160,6 +160,7 @@ Each part is followd by a delimiter. A delimiter is a custom section named `sign
 | `dn` = delimiter `n`                           |
 
 If a signature covers the entire module (i.e. there is only one part), the delimiter is optional.
+
 However, its absence prevents additional sections to be added and signed later.
 
 **Signature data:**
