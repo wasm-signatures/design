@@ -24,6 +24,7 @@ The goal is to converge on requirements that can be used to build out an initial
 Existing projects:
 
 - [WasmSign](https://github.com/jedisct1/wasmsign) - a tool to embed signatures in WebAssembly modules
+- [WasmSign2](https://github.com/jedisct1/wasmsign2) - another tool to embed signatures in WebAssembly modules, implementing one of the proposals described in this document.
 - [wasm-sign](https://github.com/frehberg/wasm-sign) - another tool to sign WebAssembly modules
 - [Istio/Envoy example](https://github.com/proxy-wasm/proxy-wasm-cpp-host/pull/147) load-time check of WasmSign signatures
 - [Validation in Lucet](https://bytecodealliance.github.io/lucet/Integrity-and-authentication.html)
