@@ -1,6 +1,6 @@
 # Wasm Signature meetings
 
-Meetings are held every other Friday at 3:00 PM UTC.
+Meetings are held every other Thursday at 3:00 PM UTC.
 
 The link to the calendar is here https://calendar.google.com/calendar/u/0?cid=Y18wbjVqN3I3MWJqY2ZsMWljdWtxNjVrZzZia0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t
 
