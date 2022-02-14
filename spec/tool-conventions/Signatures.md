@@ -71,13 +71,13 @@ The signature data is a concatenation of the following:
 
 A hash is computed for all the parts to be signed:
 
-`hn = H(pn‖dn)`
+`hn = H(pn ‖ dn)`
 
 A signature is computed on the concatenation of these hashes:
 
 `hashes = h1 ‖ h2 ‖ … ‖ hn`
 
-`s = Sign(k, "wasmsig" ‖ spec_version ‖ hash_id ‖ hashes)`
+`s = Sign(k, "wasmsig" ‖ spec_version ‖ content_type ‖ hash_id ‖ hashes)`
 
 One or more signatures can be associated with `hashes`, allowing multiple parties to sign the same data.
 
@@ -90,6 +90,7 @@ The signature data contains a sequence of signatures, where the end of the last 
 | Field               | Type        | Description                                   |
 | ------------------- | ----------- | --------------------------------------------- |
 | spec_version        | `byte`      | Specification version (`0x01`)                |
+| content_type        | `byte`      | Content type (`0x01` for WebAssembly modules) |
 | hash_fn             | `byte`      | Hash function identifier (`0x01` for SHA-256) |
 | signed_hashes_count | `varuint32` | Number of signed hashes                       |
 | signed_hashes*      | `byte`      | Sequence of hashes and their signatures       |
@@ -114,7 +115,7 @@ where a `signature` is encoded as:
 
 ## Signature verification algorithm for an entire module
 
-1. Verify the presence of the signature section, extract the specification version, the hash function to use and the signatures.
+1. Verify the presence of the signature section, extract the specification version, the content type, the hash function to use and the signatures.
 2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
 3. Split `hashes` (included in the signature) into `h1 … hn`
 4. Read the module, computing the hash of every `(pi, di)` tuple with `i ∈ {1 … n}`, immediately returning an error if the output doesn't match `hi`
@@ -130,7 +131,7 @@ In order to do so, a signer only includes hashes of relevant parts.
 
 The format is compatible with partial verification, i.e. verification of an arbitrary subset of a module:
 
-1. Verify the presence of the header, extract the specification version, the hash function to use and the signatures.
+1. Verify the presence of the header, extract the specification version, the content type, the hash function to use and the signatures.
 2. Check that at least one of the signatures is valid for `hashes`. If not, return an error and stop.
 3. Split `hashes` (included in the signature) into `h1 … hm` with `m` being the last section to verify.
 4. Read the module, computing the hash of the `(pi, di)` tuples to verify, immediately returning an error if the output doesn't match `hi`.
@@ -250,6 +251,7 @@ Signed module structure:
 Content of the signature section, for a single signature:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
@@ -298,6 +300,7 @@ In this example, a signature can be verified for any of the following ranges of 
 Content of the signature section, for a single signature:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
@@ -312,6 +315,7 @@ Content of the signature section, for a single signature:
 Variant with two signatures for the same content and key identifiers:
 
 - `0x01` (spec_version)
+- `0x01` (content_type)
 - `0x01` (hash_fn)
 - `1` (signed_hashes_count)
 - signed_hashes:
