@@ -6,6 +6,8 @@
 
 - [WebAssembly modules signatures](#webassembly-modules-signatures)
   - [Project scope](#project-scope)
+  - [Current implementations and documents](#current-implementations-and-documents)
+  - [Related projects:](#related-projects)
   - [Requirements and justifications](#requirements-and-justifications)
   - [Discussed options](#discussed-options)
   - [Scratch notes](#scratch-notes)
@@ -21,17 +23,20 @@ This work is specifically about digital signatures in WebAssembly modules, not a
 
 The goal is to converge on requirements that can be used to build out an initial and extensible specification.
 
-Existing projects:
+## Current implementations and documents
+
+The proposal from [Appendix 2](#appendix-2) has documentation and implementations to experiment with:
+
+- [WebAssembly module signatures](https://github.com/WebAssembly/tool-conventions/blob/main/Signatures.md) document for implementers.
+- [wasmsign2 rust library and CLI tool](https://github.com/wasm-signatures/wasmsign2)
+
+## Related projects:
 
 - [WasmSign](https://github.com/jedisct1/wasmsign) - a tool to embed signatures in WebAssembly modules
-- [WasmSign2](https://github.com/wasm-signatures/wasmsign2) - another tool to sign WebAssembly modules, implementing one of the proposals described in this document.
 - [wasm-sign](https://github.com/frehberg/wasm-sign) - another tool to sign WebAssembly modules
 - [Istio/Envoy example](https://github.com/proxy-wasm/proxy-wasm-cpp-host/pull/147) load-time check of WasmSign signatures
 - [Validation in Lucet](https://bytecodealliance.github.io/lucet/Integrity-and-authentication.html)
 - [WAPM package manager](https://medium.com/wasmer/securing-wapm-packages-with-package-signing-3cf0d12f32f3) signature verification
-
-Related:
-
 - [Sigstore](https://sigstore.dev) transparency log
 
 ## Requirements and justifications
